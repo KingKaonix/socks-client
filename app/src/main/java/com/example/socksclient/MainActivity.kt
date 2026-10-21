@@ -8,6 +8,7 @@ import android.net.VpnService
 import android.os.Bundle
 import android.widget.*
 import android.widget.LinearLayout
+import android.view.Gravity
 
 class MainActivity : Activity() {
     private lateinit var statusText: TextView
