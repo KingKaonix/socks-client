@@ -9,7 +9,7 @@
     <application
         android:allowBackup="true"
         android:label="SocksClient"
-        android:theme="@style/Theme.AppCompat.Light.DarkActionBar">
+        android:theme="@style/Theme.SocksClient">
 
         <activity
             android:name=".MainActivity"
