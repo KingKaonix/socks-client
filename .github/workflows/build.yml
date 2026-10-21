@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build and Release Android APK
 
 on:
   push:
@@ -8,8 +8,31 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine version
+        id: version
+        run: |
+          LATEST=$(git describe --tags --abbrev=0 2>/dev/null || echo "v1.0-alpha")
+          echo "Latest tag: $LATEST"
+          
+          if echo "$LATEST" | grep -q "alpha\." ; then
+            BASE=$(echo "$LATEST" | sed 's/\.[0-9]*$//')
+            NUM=$(echo "$LATEST" | grep -o '[0-9]*$')
+            NUM=$((NUM + 1))
+            VERSION="${BASE}.${NUM}"
+          elif [ "$LATEST" = "v1.0-alpha" ]; then
+            VERSION="v1.0-alpha.1"
+          else
+            VERSION="v1.0-alpha"
+          fi
+          echo "New version: $VERSION"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
 
       - name: Clone badvpn (tun2socks source)
         run: |
@@ -35,8 +58,12 @@ jobs:
       - name: Build APK
         run: gradle assembleDebug
 
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
         with:
-          name: socks-client-apk
-          path: app/build/outputs/apk/debug/app-debug.apk
+          tag_name: ${{ steps.version.outputs.version }}
+          name: ${{ steps.version.outputs.version }}
+          files: app/build/outputs/apk/debug/app-debug.apk
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
